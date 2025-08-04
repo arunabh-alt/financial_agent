@@ -1,0 +1,633 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Investment Recommendation Assistant</title>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <style>
+        :root {
+            --primary: #2563eb;
+            --primary-dark: #1d4ed8;
+            --secondary: #10b981;
+            --dark: #1e293b;
+            --light: #f8fafc;
+            --gray: #94a3b8;
+            --success: #22c55e;
+            --warning: #f59e0b;
+            --danger: #ef4444;
+        }
+        
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+        }
+        
+        body {
+            background: linear-gradient(135deg, #0f172a, #1e293b);
+            color: var(--light);
+            min-height: 100vh;
+            padding: 20px;
+        }
+        
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+        }
+        
+        header {
+            text-align: center;
+            padding: 30px 0;
+        }
+        
+        header h1 {
+            font-size: 2.5rem;
+            margin-bottom: 10px;
+            background: linear-gradient(to right, var(--primary), var(--secondary));
+            -webkit-background-clip: text;
+            background-clip: text;
+            color: transparent;
+        }
+        
+        header p {
+            color: var(--gray);
+            max-width: 600px;
+            margin: 0 auto;
+            line-height: 1.6;
+        }
+        
+        .card {
+            background: rgba(30, 41, 59, 0.7);
+            backdrop-filter: blur(10px);
+            border-radius: 15px;
+            padding: 25px;
+            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.3);
+            margin-bottom: 30px;
+            border: 1px solid rgba(255, 255, 255, 0.1);
+        }
+        
+        .card-title {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            margin-bottom: 20px;
+            color: var(--primary);
+            font-size: 1.3rem;
+        }
+        
+        .card-title i {
+            font-size: 1.5rem;
+        }
+        
+        .form-group {
+            margin-bottom: 20px;
+        }
+        
+        label {
+            display: block;
+            margin-bottom: 8px;
+            font-weight: 500;
+        }
+        
+        .input-group {
+            display: flex;
+            gap: 15px;
+            flex-wrap: wrap;
+        }
+        
+        .input-item {
+            flex: 1;
+            min-width: 250px;
+        }
+        
+        input, select {
+            width: 100%;
+            padding: 14px;
+            background: rgba(15, 23, 42, 0.7);
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            border-radius: 8px;
+            color: var(--light);
+            font-size: 1rem;
+            outline: none;
+            transition: all 0.3s ease;
+        }
+        
+        input:focus, select:focus {
+            border-color: var(--primary);
+            box-shadow: 0 0 0 3px rgba(37, 99, 235, 0.2);
+        }
+        
+        button {
+            background: linear-gradient(to right, var(--primary), var(--primary-dark));
+            color: white;
+            border: none;
+            padding: 14px 25px;
+            border-radius: 8px;
+            font-size: 1rem;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            display: inline-flex;
+            align-items: center;
+            gap: 10px;
+        }
+        
+        button:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 5px 15px rgba(37, 99, 235, 0.4);
+        }
+        
+        button:disabled {
+            background: var(--gray);
+            cursor: not-allowed;
+            transform: none;
+            box-shadow: none;
+        }
+        
+        .btn-group {
+            display: flex;
+            gap: 15px;
+            margin-top: 20px;
+        }
+        
+        .btn-secondary {
+            background: rgba(30, 41, 59, 0.7);
+            border: 1px solid var(--primary);
+        }
+        
+        .results {
+            display: none;
+        }
+        
+        .result-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 20px;
+        }
+        
+        .ticker {
+            font-size: 1.8rem;
+            font-weight: 700;
+            color: var(--primary);
+        }
+        
+        .confidence {
+            display: inline-block;
+            background: rgba(16, 185, 129, 0.2);
+            color: var(--secondary);
+            padding: 5px 15px;
+            border-radius: 20px;
+            font-weight: 600;
+        }
+        
+        .confidence.low {
+            background: rgba(239, 68, 68, 0.2);
+            color: var(--danger);
+        }
+        
+        .confidence.medium {
+            background: rgba(245, 158, 11, 0.2);
+            color: var(--warning);
+        }
+        
+        .result-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+            gap: 20px;
+            margin-top: 20px;
+        }
+        
+        .result-card {
+            background: rgba(15, 23, 42, 0.7);
+            border-radius: 10px;
+            padding: 20px;
+            border-left: 4px solid var(--primary);
+        }
+        
+        .result-card h3 {
+            margin-bottom: 15px;
+            color: var(--primary);
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+        
+        .metrics {
+            display: grid;
+            grid-template-columns: repeat(2, 1fr);
+            gap: 15px;
+        }
+        
+        .metric {
+            display: flex;
+            flex-direction: column;
+        }
+        
+        .metric-label {
+            font-size: 0.9rem;
+            color: var(--gray);
+        }
+        
+        .metric-value {
+            font-size: 1.2rem;
+            font-weight: 700;
+            margin-top: 5px;
+        }
+        
+        .risk-tag {
+            display: inline-block;
+            padding: 5px 15px;
+            border-radius: 20px;
+            font-weight: 600;
+            margin-top: 10px;
+        }
+        
+        .risk-low {
+            background: rgba(16, 185, 129, 0.2);
+            color: var(--secondary);
+        }
+        
+        .risk-medium {
+            background: rgba(245, 158, 11, 0.2);
+            color: var(--warning);
+        }
+        
+        .risk-high {
+            background: rgba(239, 68, 68, 0.2);
+            color: var(--danger);
+        }
+        
+        .warnings {
+            background: rgba(239, 68, 68, 0.1);
+            border-left: 4px solid var(--danger);
+            padding: 15px;
+            border-radius: 8px;
+            margin-top: 20px;
+        }
+        
+        .warnings h3 {
+            color: var(--danger);
+            margin-bottom: 10px;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+        
+        .warnings ul {
+            padding-left: 20px;
+        }
+        
+        .warnings li {
+            margin-bottom: 8px;
+            line-height: 1.5;
+        }
+        
+        .loading {
+            text-align: center;
+            padding: 40px 0;
+            display: none;
+        }
+        
+        .spinner {
+            width: 50px;
+            height: 50px;
+            border: 5px solid rgba(37, 99, 235, 0.2);
+            border-top: 5px solid var(--primary);
+            border-radius: 50%;
+            animation: spin 1s linear infinite;
+            margin: 0 auto 20px;
+        }
+        
+        @keyframes spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
+        
+        .error {
+            background: rgba(239, 68, 68, 0.1);
+            border-left: 4px solid var(--danger);
+            padding: 15px;
+            border-radius: 8px;
+            margin: 20px 0;
+            display: none;
+        }
+        
+        .popular-tickers {
+            display: flex;
+            gap: 10px;
+            flex-wrap: wrap;
+            margin-top: 15px;
+        }
+        
+        .ticker-tag {
+            background: rgba(37, 99, 235, 0.2);
+            color: var(--primary);
+            padding: 5px 15px;
+            border-radius: 20px;
+            cursor: pointer;
+            transition: all 0.3s ease;
+        }
+        
+        .ticker-tag:hover {
+            background: var(--primary);
+            color: white;
+        }
+        
+        footer {
+            text-align: center;
+            padding: 30px 0;
+            color: var(--gray);
+            font-size: 0.9rem;
+        }
+        
+        @media (max-width: 768px) {
+            .input-group {
+                flex-direction: column;
+                gap: 15px;
+            }
+            
+            .input-item {
+                min-width: 100%;
+            }
+            
+            .btn-group {
+                flex-direction: column;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+    <header>
+        <h1><i class="fas fa-chart-line"></i> Investment Recommendation Assistant</h1>
+        <p>Get AI-powered investment recommendations for software companies based on financial metrics and market analysis</p>
+    </header>
+
+    <main>
+        <div class="card">
+            <h2 class="card-title"><i class="fas fa-cogs"></i> Investment Criteria</h2>
+
+            <div class="form-group">
+                <label for="company">Company Ticker Symbol</label>
+                <input type="text" id="company" placeholder="Enter ticker symbol (e.g. AAPL, MSFT, GOOGL)" />
+                <div class="popular-tickers">
+                    <span class="ticker-tag" data-ticker="AAPL">Apple (AAPL)</span>
+                    <span class="ticker-tag" data-ticker="MSFT">Microsoft (MSFT)</span>
+                    <span class="ticker-tag" data-ticker="GOOGL">Google (GOOGL)</span>
+                    <span class="ticker-tag" data-ticker="AMZN">Amazon (AMZN)</span>
+                    <span class="ticker-tag" data-ticker="META">Meta (META)</span>
+                </div>
+            </div>
+
+            <div class="input-group">
+                <div class="input-item">
+                    <label for="min-price">Minimum Stock Price ($)</label>
+                    <input type="number" id="min-price" min="0" value="100" />
+                </div>
+
+                <div class="input-item">
+                    <label for="max-pe">Maximum P/E Ratio</label>
+                    <input type="number" id="max-pe" min="0" value="30" />
+                </div>
+
+                <div class="input-item">
+                    <label for="max-debt">Maximum Debt-to-Equity Ratio</label>
+                    <input type="number" id="max-debt" min="0" step="0.1" value="0.5" />
+                </div>
+            </div>
+
+            <div class="form-group">
+                <label for="sectors">Target Sectors</label>
+                <select id="sectors" multiple>
+                    <option value="Technology" selected>Technology</option>
+                    <option value="Software">Software</option>
+                    <option value="Cloud">Cloud Computing</option>
+                    <option value="AI">Artificial Intelligence</option>
+                    <option value="FinTech">FinTech</option>
+                    <option value="E-commerce">E-commerce</option>
+                </select>
+                <small>Hold Ctrl/Cmd to select multiple sectors</small>
+            </div>
+
+            <div class="btn-group">
+                <button id="get-recommendation"><i class="fas fa-lightbulb"></i> Get Recommendation</button>
+                <button class="btn-secondary" id="reset-form"><i class="fas fa-redo"></i> Reset Form</button>
+            </div>
+        </div>
+
+        <div class="loading" id="loading">
+            <div class="spinner"></div>
+            <p>Analyzing company data and generating recommendation...</p>
+        </div>
+
+        <div class="error" id="error">
+            <h3><i class="fas fa-exclamation-triangle"></i> Error</h3>
+            <p id="error-message"></p>
+        </div>
+
+        <div class="card results" id="results">
+            <div class="result-header">
+                <div>
+                    <h2 class="card-title"><i class="fas fa-file-alt"></i> Investment Recommendation</h2>
+                    <div class="ticker" id="result-ticker">MSFT</div>
+                </div>
+                <div class="confidence" id="confidence">0.85</div>
+            </div>
+
+            <div class="result-grid">
+                <div class="result-card">
+                    <h3><i class="fas fa-lightbulb"></i> Investment Thesis</h3>
+                    <p id="thesis">Recommendation details will appear here.</p>
+                </div>
+
+                <div class="result-card">
+                    <h3><i class="fas fa-chart-bar"></i> Key Metrics</h3>
+                    <div class="metrics">
+                        <div class="metric">
+                            <span class="metric-label">P/E Ratio</span>
+                            <span class="metric-value" id="pe-ratio">N/A</span>
+                        </div>
+                        <div class="metric">
+                            <span class="metric-label">Debt-to-Equity</span>
+                            <span class="metric-value" id="debt-equity">N/A</span>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="result-card">
+                    <h3><i class="fas fa-exclamation-triangle"></i> Risk Assessment</h3>
+                    <p>The stock shows moderate risk due to valuation or market factors.</p>
+                    <div class="risk-tag risk-medium" id="risk-tag">Medium Risk</div>
+                </div>
+            </div>
+
+            <div class="warnings" id="warnings-section">
+                <h3><i class="fas fa-exclamation-circle"></i> Potential Concerns</h3>
+                <ul id="warnings-list"></ul>
+            </div>
+        </div>
+    </main>
+
+    <footer>
+        <p>Investment Recommendation Assistant v1.0 | Powered by Financial AI Analysis</p>
+        <p>Data provided for informational purposes only. Not financial advice.</p>
+    </footer>
+</div>
+
+<script>
+    document.addEventListener('DOMContentLoaded', function () {
+        const companyInput = document.getElementById('company');
+        const minPriceInput = document.getElementById('min-price');
+        const maxPeInput = document.getElementById('max-pe');
+        const maxDebtInput = document.getElementById('max-debt');
+        const sectorsSelect = document.getElementById('sectors');
+        const getRecommendationBtn = document.getElementById('get-recommendation');
+        const resetBtn = document.getElementById('reset-form');
+        const loadingDiv = document.getElementById('loading');
+        const errorDiv = document.getElementById('error');
+        const errorMessage = document.getElementById('error-message');
+        const resultsDiv = document.getElementById('results');
+        const tickerTags = document.querySelectorAll('.ticker-tag');
+
+        const resultTicker = document.getElementById('result-ticker');
+        const confidenceEl = document.getElementById('confidence');
+        const thesisEl = document.getElementById('thesis');
+        const peRatioEl = document.getElementById('pe-ratio');
+        const debtEquityEl = document.getElementById('debt-equity');
+        const riskTag = document.getElementById('risk-tag');
+        const warningsList = document.getElementById('warnings-list');
+        const warningsSection = document.getElementById('warnings-section');
+
+        tickerTags.forEach(tag => {
+            tag.addEventListener('click', () => {
+                companyInput.value = tag.getAttribute('data-ticker');
+            });
+        });
+
+        resetBtn.addEventListener('click', () => {
+            companyInput.value = '';
+            minPriceInput.value = '100';
+            maxPeInput.value = '30';
+            maxDebtInput.value = '0.5';
+            for (let i = 0; i < sectorsSelect.options.length; i++) {
+                sectorsSelect.options[i].selected = i === 0;
+            }
+            resultsDiv.style.display = 'none';
+            errorDiv.style.display = 'none';
+        });
+
+        getRecommendationBtn.addEventListener('click', async () => {
+            const ticker = companyInput.value.trim().toUpperCase();
+            if (!ticker) return showError('Please enter a company ticker symbol');
+
+            const selectedSectors = [];
+            for (let i = 0; i < sectorsSelect.options.length; i++) {
+                if (sectorsSelect.options[i].selected) {
+                    selectedSectors.push(sectorsSelect.options[i].value);
+                }
+            }
+
+            if (selectedSectors.length === 0) {
+                return showError('Please select at least one sector');
+            }
+
+            const criteria = {
+                min_price: parseFloat(minPriceInput.value),
+                max_pe_ratio: parseFloat(maxPeInput.value),
+                max_debt_ratio: parseFloat(maxDebtInput.value),
+                sectors: selectedSectors
+            };
+
+            loadingDiv.style.display = 'block';
+            resultsDiv.style.display = 'none';
+            errorDiv.style.display = 'none';
+
+            try {
+                const response = await fetch('/recommendations', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json'
+                    },
+                    body: JSON.stringify({
+                        tickers: [ticker],
+                        criteria: criteria
+                    })
+                });
+
+                if (!response.ok) {
+                    const errorData = await response.json();
+                    throw new Error(errorData.detail || 'API request failed');
+                }
+
+                const data = await response.json();
+                if (data.recommendations && data.recommendations.length > 0) {
+                    displayRecommendation(ticker, data.recommendations[0]);
+                } else {
+                    throw new Error('No recommendation data received');
+                }
+            } catch (error) {
+                showError(error.message);
+            } finally {
+                loadingDiv.style.display = 'none';
+            }
+        });
+
+        function displayRecommendation(ticker, recommendation) {
+            resultTicker.textContent = ticker;
+            confidenceEl.textContent = recommendation.confidence_score.toFixed(2);
+            thesisEl.textContent = recommendation.investment_thesis;
+
+            confidenceEl.className = 'confidence';
+            if (recommendation.confidence_score < 0.4) {
+                confidenceEl.classList.add('low');
+            } else if (recommendation.confidence_score < 0.7) {
+                confidenceEl.classList.add('medium');
+            } else {
+                confidenceEl.classList.add('high');
+            }
+
+            if (recommendation.key_metrics) {
+                peRatioEl.textContent = recommendation.key_metrics.pe_ratio !== null
+                    ? recommendation.key_metrics.pe_ratio.toFixed(2) : 'N/A';
+                debtEquityEl.textContent = recommendation.key_metrics.debt_to_equity !== null
+                    ? recommendation.key_metrics.debt_to_equity.toFixed(2) : 'N/A';
+            }
+
+            riskTag.textContent = `${recommendation.risk_assessment} Risk`;
+            riskTag.className = 'risk-tag';
+            if (recommendation.risk_assessment.toLowerCase().includes('high')) {
+                riskTag.classList.add('risk-high');
+            } else if (recommendation.risk_assessment.toLowerCase().includes('medium')) {
+                riskTag.classList.add('risk-medium');
+            } else {
+                riskTag.classList.add('risk-low');
+            }
+
+            warningsList.innerHTML = '';
+            if (recommendation.warnings && recommendation.warnings.length > 0) {
+                recommendation.warnings.forEach(warning => {
+                    const li = document.createElement('li');
+                    li.textContent = warning;
+                    warningsList.appendChild(li);
+                });
+                warningsSection.style.display = 'block';
+            } else {
+                warningsSection.style.display = 'none';
+            }
+
+            resultsDiv.style.display = 'block';
+        }
+
+        function showError(message) {
+            errorMessage.textContent = message;
+            errorDiv.style.display = 'block';
+            resultsDiv.style.display = 'none';
+            loadingDiv.style.display = 'none';
+        }
+    });
+</script>
+</body>
+</html>
